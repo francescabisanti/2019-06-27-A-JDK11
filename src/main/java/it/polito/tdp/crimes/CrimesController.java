@@ -5,8 +5,10 @@
 package it.polito.tdp.crimes;
 
 import java.net.URL;
+import java.util.List;
 import java.util.ResourceBundle;
 
+import it.polito.tdp.crimes.model.Adiacenza;
 import it.polito.tdp.crimes.model.Model;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -25,16 +27,16 @@ public class CrimesController {
     private URL location;
 
     @FXML // fx:id="boxCategoria"
-    private ComboBox<?> boxCategoria; // Value injected by FXMLLoader
+    private ComboBox<String> boxCategoria; // Value injected by FXMLLoader
 
     @FXML // fx:id="boxAnno"
-    private ComboBox<?> boxAnno; // Value injected by FXMLLoader
+    private ComboBox<Integer> boxAnno; // Value injected by FXMLLoader
 
     @FXML // fx:id="btnAnalisi"
     private Button btnAnalisi; // Value injected by FXMLLoader
 
     @FXML // fx:id="boxArco"
-    private ComboBox<?> boxArco; // Value injected by FXMLLoader
+    private ComboBox<Adiacenza> boxArco; // Value injected by FXMLLoader
 
     @FXML // fx:id="btnPercorso"
     private Button btnPercorso; // Value injected by FXMLLoader
@@ -46,12 +48,30 @@ public class CrimesController {
     void doCreaGrafo(ActionEvent event) {
     	txtResult.clear();
     	txtResult.appendText("Crea grafo...\n");
+    	int anno= boxAnno.getValue();
+    	String categoria= boxCategoria.getValue();
+    	this.model.creaGrafo(anno, categoria);
+    	this.txtResult.appendText("#VERTICI: "+this.model.getNvertici()+"\n");
+    	this.txtResult.appendText("#ARCHI: "+this.model.getNArchi()+"\n");
+    	List <Adiacenza> massimi= model.getMassimi(anno, categoria);
+    	for(Adiacenza a: massimi) {
+    		this.txtResult.appendText(a.toString());
+    	}
+    	
+    	this.boxArco.getItems().addAll(model.getDao().getAdiacenza(anno, categoria));
     }
 
     @FXML
     void doCalcolaPercorso(ActionEvent event) {
     	txtResult.clear();
     	txtResult.appendText("Calcola percorso...\n");
+    	Adiacenza a= this.boxArco.getValue();
+    	List <String> percorso= model.trovaPercorso(a);
+    	this.txtResult.appendText("Il percorso con peso minimo da "+a.getTipo1()+" a "+a.getTipo2()+" e' :\n");
+    	for(String s: percorso) {
+    		this.txtResult.appendText(s+"\n");
+    	}
+    	
     }
 
     @FXML // This method is called by the FXMLLoader when initialization is complete
@@ -67,5 +87,7 @@ public class CrimesController {
     
     public void setModel(Model model) {
     	this.model = model;
+    	this.boxCategoria.getItems().addAll(model.getCategorie());
+    	this.boxAnno.getItems().addAll(model.getAnni());
     }
 }
