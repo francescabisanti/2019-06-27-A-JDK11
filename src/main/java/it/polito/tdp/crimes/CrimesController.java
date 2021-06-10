@@ -8,6 +8,8 @@ import java.net.URL;
 import java.util.List;
 import java.util.ResourceBundle;
 
+import org.jgrapht.graph.DefaultWeightedEdge;
+
 import it.polito.tdp.crimes.model.Adiacenza;
 import it.polito.tdp.crimes.model.Model;
 import javafx.event.ActionEvent;
@@ -36,7 +38,7 @@ public class CrimesController {
     private Button btnAnalisi; // Value injected by FXMLLoader
 
     @FXML // fx:id="boxArco"
-    private ComboBox<Adiacenza> boxArco; // Value injected by FXMLLoader
+    private ComboBox<DefaultWeightedEdge> boxArco; // Value injected by FXMLLoader
 
     @FXML // fx:id="btnPercorso"
     private Button btnPercorso; // Value injected by FXMLLoader
@@ -48,26 +50,26 @@ public class CrimesController {
     void doCreaGrafo(ActionEvent event) {
     	txtResult.clear();
     	txtResult.appendText("Crea grafo...\n");
-    	int anno= boxAnno.getValue();
-    	String categoria= boxCategoria.getValue();
-    	this.model.creaGrafo(anno, categoria);
-    	this.txtResult.appendText("#VERTICI: "+this.model.getNvertici()+"\n");
+    	String categoria= this.boxCategoria.getValue();
+    	Integer anno=this.boxAnno.getValue();
+    	model.creaGrafo(categoria, anno);
+    	this.txtResult.appendText("#VERTICI: "+this.model.getNVertici()+"\n");
     	this.txtResult.appendText("#ARCHI: "+this.model.getNArchi()+"\n");
-    	List <Adiacenza> massimi= model.getMassimi(anno, categoria);
-    	for(Adiacenza a: massimi) {
+    	List <Adiacenza> massime= model.getMassime(categoria, anno);
+    	for(Adiacenza a :massime) {
     		this.txtResult.appendText(a.toString());
     	}
     	
-    	this.boxArco.getItems().addAll(model.getDao().getAdiacenza(anno, categoria));
+    	this.boxArco.getItems().addAll(model.getGrafo().edgeSet());
     }
 
     @FXML
     void doCalcolaPercorso(ActionEvent event) {
     	txtResult.clear();
     	txtResult.appendText("Calcola percorso...\n");
-    	Adiacenza a= this.boxArco.getValue();
-    	List <String> percorso= model.trovaPercorso(a);
-    	this.txtResult.appendText("Il percorso con peso minimo da "+a.getTipo1()+" a "+a.getTipo2()+" e' :\n");
+    	DefaultWeightedEdge e = boxArco.getValue();
+    	List<String> percorso= model.trovaPercorso(e);
+    	this.txtResult.appendText("Il percorso con peso minimo per andare da \n"+ model.getGrafo().getEdgeSource(e)+" a "+model.getGrafo().getEdgeTarget(e)+" è: \n");
     	for(String s: percorso) {
     		this.txtResult.appendText(s+"\n");
     	}
@@ -87,7 +89,7 @@ public class CrimesController {
     
     public void setModel(Model model) {
     	this.model = model;
-    	this.boxCategoria.getItems().addAll(model.getCategorie());
-    	this.boxAnno.getItems().addAll(model.getAnni());
+    	this.boxCategoria.getItems().addAll(model.listAllCategorie());
+    	this.boxAnno.getItems().addAll(model.listAllAnni());
     }
 }

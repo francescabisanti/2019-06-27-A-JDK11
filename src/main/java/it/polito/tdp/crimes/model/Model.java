@@ -10,109 +10,112 @@ import org.jgrapht.graph.SimpleWeightedGraph;
 import it.polito.tdp.crimes.db.EventsDao;
 
 public class Model {
-	List <String> migliore;
-	double pesoMin;
-	EventsDao dao;
-	SimpleWeightedGraph <String, DefaultWeightedEdge> grafo;
-	
-	public Model() {
-		dao = new EventsDao();
-	}
-	
-	public List <String> getCategorie(){
-		return dao.getCategorie();
-	}
-	
-	public void creaGrafo(int anno, String categoria) {
-		grafo= new SimpleWeightedGraph <String, DefaultWeightedEdge> (DefaultWeightedEdge.class);
-		Graphs.addAllVertices(this.grafo, dao.getVertici(anno, categoria));
-		for(Adiacenza a: dao.getAdiacenza(anno, categoria)) {
-			Graphs.addEdgeWithVertices(this.grafo, a.getTipo1(), a.getTipo2(),a .getPeso());
+		EventsDao dao;
+		
+		SimpleWeightedGraph <String, DefaultWeightedEdge> grafo;
+		List <String> migliore;
+		Double pesoMin;
+		
+		
+		
+		public Model() {
+			dao= new EventsDao();
 		}
-	
-	}
-	
-	public List <Integer> getAnni(){
-		return dao.getAnni();
-	}
-	public int getNvertici() {
-		return this.grafo.vertexSet().size();
-	}
-	
-	public int getNArchi() {
-		return this.grafo.edgeSet().size();
-	}
-	
-	public List <Adiacenza> getMassimi(int anno, String categoria){
-		List <Adiacenza> massimi= new ArrayList<>();
-		massimi.add(dao.getAdiacenza(anno, categoria).get(0));
-		for(Adiacenza a: this.dao.getAdiacenza(anno, categoria)) {
-			if(!a.equals(dao.getAdiacenza(anno, categoria).get(0))&& a.getPeso()==dao.getAdiacenza(anno, categoria).get(0).getPeso())
-				massimi.add(a);
-		}
-		return massimi;
-	}
-
-	public EventsDao getDao() {
-		return dao;
-	}
-
-	public void setDao(EventsDao dao) {
-		this.dao = dao;
-	}
-
-	public SimpleWeightedGraph<String, DefaultWeightedEdge> getGrafo() {
-		return grafo;
-	}
-
-	public void setGrafo(SimpleWeightedGraph<String, DefaultWeightedEdge> grafo) {
-		this.grafo = grafo;
-	}
-	
-	public List <String> trovaPercorso(Adiacenza a){
-		this.migliore= new ArrayList<String>();
-		this.pesoMin=Integer.MAX_VALUE;
-		List <String> parziale= new ArrayList <String>();
-		parziale.add(a.getTipo1());
-		cerca(a.getTipo2(), parziale,0);
-		return migliore;
-	}
-
-	private void cerca(String tipo2, List<String> parziale,double peso) {
-		if(parziale.size()==grafo.vertexSet().size()) {
-		if(parziale.get(parziale.size()-1).equals(tipo2)) {
-			if(this.migliore.size()==0) {
-				this.pesoMin=peso;
-				this.migliore= new ArrayList <>(parziale);
-				return;
+		
+		public void creaGrafo(String categoria, Integer anno) {
+			grafo= new SimpleWeightedGraph <String, DefaultWeightedEdge>(DefaultWeightedEdge.class);
+			Graphs.addAllVertices(this.grafo, dao.listAllVertici(categoria, anno));
+			for(Adiacenza a :dao.listAllAdiacenze(categoria, anno)) {
+				if(grafo.containsVertex(a.getTipo1())&&grafo.containsVertex(a.getTipo2())) {
+					Graphs.addEdge(this.grafo, a.getTipo1(), a.getTipo2(), a.getPeso());
+				}
 			}
-			if(this.pesoMin>peso) {
-				this.pesoMin=peso;
-				this.migliore= new ArrayList <>(parziale);
-				return;
-			}
-			return;
+		
 		}
-		return;
-		}
-		String tipoUltimo= parziale.get(parziale.size()-1);
-		for(DefaultWeightedEdge e: this.grafo.edgesOf(tipoUltimo)) {
-			String prova= Graphs.getOppositeVertex(grafo, e, tipoUltimo);
-			double pesoProva= grafo.getEdgeWeight(e);
-			if(!parziale.contains(prova)) {
-				parziale.add(prova);
-				peso=peso+pesoProva;
-				cerca(prova,parziale, peso);
-				parziale.remove(prova);
-				peso=peso-pesoProva;
-				
+		
+		public List<Adiacenza> getMassime(String categoria, Integer anno){
+			List <Adiacenza> massime= new ArrayList<>();
+			List <Adiacenza> tutte= dao.listAllAdiacenze(categoria, anno);
+			massime.add(tutte.get(0));
+			for(Adiacenza a : tutte ) {
+				if(a.getPeso()==tutte.get(0).getPeso() && !a.equals(tutte.get(0))) {
+					massime.add(a);
+				}
 			}
+			return massime;
 		}
 		
 		
-	}
+		public List <String> trovaPercorso(DefaultWeightedEdge e ){
+			this.migliore= new ArrayList<>();
+			String partenza = grafo.getEdgeSource(e);
+			
+			this.pesoMin=0.0;
+			String arrivo= grafo.getEdgeTarget(e);
+			List <String> parziale= new ArrayList <>();
+			parziale.add(partenza);
+			cerca(arrivo, parziale, 0);
+			return migliore;
+			
+		}
+		
+		
+		private void cerca(String arrivo, List<String> parziale, double peso) {
+			//caso terminale --> tocco tutti i vertici
+			if(parziale.size()==grafo.vertexSet().size()) {
+				if(parziale.get(parziale.size()-1).equals(arrivo)) {
+					if(peso<this.pesoMin) {
+						migliore= new ArrayList <>(parziale);
+						this.pesoMin=peso;
+						return;
+					}
+					return;
+				}
+				return;
+			}
+			
+			String ultimo=parziale.get(parziale.size()-1);
+			for(String s: Graphs.neighborListOf(grafo, ultimo)) {
+				if(!parziale.contains(s)) {
+					DefaultWeightedEdge e= grafo.getEdge(ultimo, s);
+					double pesoProva= grafo.getEdgeWeight(e);
+					parziale.add(s);
+					cerca( arrivo, parziale, peso+pesoProva);
+					parziale.remove(parziale.get(parziale.size()-1));
+					peso=peso-pesoProva;
+					
+				}
+			}
+			
+		}
 
-	
+		public EventsDao getDao() {
+			return dao;
+		}
 
+		
+
+		public SimpleWeightedGraph<String, DefaultWeightedEdge> getGrafo() {
+			return grafo;
+		}
+
+		
+
+		public int getNVertici() {
+			return this.grafo.vertexSet().size();
+		}
+		
+		public int getNArchi() {
+			return this.grafo.edgeSet().size();
+		}
+
+		public List<String> listAllCategorie(){
+			return dao.listAllCategorie();
+		}
+		
+		
+		public List<Integer> listAllAnni(){
+			return dao.listAllAnni();
+		}
 	
 }

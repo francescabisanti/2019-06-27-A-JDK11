@@ -56,10 +56,10 @@ public class EventsDao {
 		}
 	}
 	
-	public List <String> getCategorie(){
-		String sql="SELECT DISTINCT e.offense_category_id as id "
-				+ "FROM events e "
-				+ " ORDER BY id ASC ";
+	public List<String> listAllCategorie(){
+		String sql = "SELECT DISTINCT e.offense_category_id AS c "
+				+ "FROM EVENTS e  "
+				+ "ORDER BY c ASC " ;
 		try {
 			Connection conn = DBConnect.getConnection() ;
 
@@ -70,7 +70,7 @@ public class EventsDao {
 			ResultSet res = st.executeQuery() ;
 			
 			while(res.next()) {
-				list.add(res.getString("id"));					
+				list.add(res.getString("c"));
 			}
 			
 			conn.close();
@@ -81,14 +81,12 @@ public class EventsDao {
 			e.printStackTrace();
 			return null ;
 		}
-		
 	}
 	
-	public List <Integer> getAnni(){
-		String sql="SELECT DISTINCT YEAR(e.reported_date) AS anno "
-				+ "FROM events e "
-				+ "ORDER BY anno ASC ";
-		
+	public List<Integer> listAllAnni(){
+		String sql = "SELECT DISTINCT YEAR(e.reported_date) AS c "
+				+ "FROM EVENTS e "
+				+ "ORDER BY c ASC" ;
 		try {
 			Connection conn = DBConnect.getConnection() ;
 
@@ -99,7 +97,7 @@ public class EventsDao {
 			ResultSet res = st.executeQuery() ;
 			
 			while(res.next()) {
-				list.add(res.getInt("anno"));					
+				list.add(res.getInt("c"));
 			}
 			
 			conn.close();
@@ -112,11 +110,12 @@ public class EventsDao {
 		}
 	}
 	
-	public List <String> getVertici(int anno, String categoria){
-		String sql="SELECT DISTINCT e.offense_type_id AS tipo "
-				+ "FROM events e  "
+	
+	public List<String> listAllVertici(String categoria, Integer anno){
+		String sql = "SELECT DISTINCT e.offense_type_id AS c "
+				+ "FROM EVENTS e "
 				+ "WHERE YEAR(e.reported_date)=? AND e.offense_category_id=? "
-				+ "ORDER BY tipo ASC";
+				+ "" ;
 		try {
 			Connection conn = DBConnect.getConnection() ;
 
@@ -128,7 +127,7 @@ public class EventsDao {
 			ResultSet res = st.executeQuery() ;
 			
 			while(res.next()) {
-				list.add(res.getString("tipo"));					
+				list.add(res.getString("c"));
 			}
 			
 			conn.close();
@@ -139,16 +138,16 @@ public class EventsDao {
 			e.printStackTrace();
 			return null ;
 		}
-		
 	}
 	
-	public List <Adiacenza> getAdiacenza(int anno, String categoria){
-		String sql="SELECT DISTINCT e1.offense_type_id AS t1, e2.offense_type_id AS t2, COUNT(DISTINCT(e1.district_id)) AS peso "
-				+ "FROM events e1, events e2 "
-				+ "WHERE YEAR(e1.reported_date)=? AND YEAR(e2.reported_date)=YEAR(e1.reported_date) AND e1.offense_category_id=? "
-				+ "AND e1.offense_category_id=e2.offense_category_id "
-				+ "AND e1.offense_type_id> e2.offense_type_id AND e1.district_id=e2.district_id "
+	public List<Adiacenza> listAllAdiacenze(String categoria, Integer anno){
+		String sql = "SELECT DISTINCT e1.offense_type_id AS t1, e2.offense_type_id AS t2, COUNT(DISTINCT(e1.district_id)) AS peso "
+				+ "FROM EVENTS e1, EVENTS e2 "
+				+ "WHERE YEAR(e1.reported_date)=? AND YEAR(e1.reported_date)=YEAR(e2.reported_date) AND  e1.offense_category_id=? "
+				+ "AND e1.offense_category_id=e2.offense_category_id AND e1.offense_type_id> e2.offense_type_id "
+				+ " AND e1.district_id =e2.district_id "
 				+ "GROUP BY e1.offense_type_id, e2.offense_type_id "
+				+ "HAVING peso>0 "
 				+ " ORDER BY peso DESC ";
 		try {
 			Connection conn = DBConnect.getConnection() ;
@@ -161,11 +160,12 @@ public class EventsDao {
 			ResultSet res = st.executeQuery() ;
 			
 			while(res.next()) {
-				String tipo1= res.getString("t1");			
+				String tipo1= res.getString("t1");
 				String tipo2= res.getString("t2");
-				double peso= res.getDouble("peso");
-				Adiacenza a = new Adiacenza(tipo1,tipo2,peso);
+				Double peso= res.getDouble("peso");
+				Adiacenza a = new Adiacenza (tipo1,tipo2,peso);
 				list.add(a);
+				
 			}
 			
 			conn.close();
@@ -176,8 +176,6 @@ public class EventsDao {
 			e.printStackTrace();
 			return null ;
 		}
-		
 	}
 	
-
 }
