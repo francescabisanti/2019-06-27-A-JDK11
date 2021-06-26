@@ -48,32 +48,33 @@ public class CrimesController {
 
     @FXML
     void doCreaGrafo(ActionEvent event) {
-    	txtResult.clear();
-    	txtResult.appendText("Crea grafo...\n");
-    	String categoria= this.boxCategoria.getValue();
-    	Integer anno=this.boxAnno.getValue();
-    	model.creaGrafo(categoria, anno);
-    	this.txtResult.appendText("#VERTICI: "+this.model.getNVertici()+"\n");
-    	this.txtResult.appendText("#ARCHI: "+this.model.getNArchi()+"\n");
-    	List <Adiacenza> massime= model.getMassime(categoria, anno);
-    	for(Adiacenza a :massime) {
-    		this.txtResult.appendText(a.toString());
+    	this.txtResult.clear();
+    	this.txtResult.setText("Grafo creato...\n");
+    	String categoria=this.boxCategoria.getValue();
+    	Integer anno= this.boxAnno.getValue();
+    	if(categoria==null || anno== null) {
+    		this.txtResult.setText("Seleziona prima una categoria e un anno per creare il grafo");
+    		return;
     	}
-    	
-    	this.boxArco.getItems().addAll(model.getGrafo().edgeSet());
+    	this.model.creaGrafo(categoria, anno);
+    	this.txtResult.appendText("#VERTICI: "+this.model.getNVertici()+"\n");
+    	this.txtResult.appendText("#ARCHI: "+this.model.getNArchi());
+    	List <DefaultWeightedEdge> result= model.trovaMassimi();
+    	for(DefaultWeightedEdge r: result) {
+    		this.txtResult.appendText(this.model.getGrafo().getEdgeSource(r)+" - "+this.model.getGrafo().getEdgeTarget(r)+" peso: "+this.model.getGrafo().getEdgeWeight(r)+"\n");
+    	}
+    	this.boxArco.getItems().addAll(result);
     }
 
     @FXML
     void doCalcolaPercorso(ActionEvent event) {
-    	txtResult.clear();
-    	txtResult.appendText("Calcola percorso...\n");
-    	DefaultWeightedEdge e = boxArco.getValue();
-    	List<String> percorso= model.trovaPercorso(e);
-    	this.txtResult.appendText("Il percorso con peso minimo per andare da \n"+ model.getGrafo().getEdgeSource(e)+" a "+model.getGrafo().getEdgeTarget(e)+" è: \n");
-    	for(String s: percorso) {
+    	this.txtResult.clear();
+    	DefaultWeightedEdge e= this.boxArco.getValue();
+    	List <String> result= model.trovaPercorso(e);
+    	this.txtResult.appendText("ciao");
+    	for(String s: result) {
     		this.txtResult.appendText(s+"\n");
     	}
-    	
     }
 
     @FXML // This method is called by the FXMLLoader when initialization is complete
@@ -89,7 +90,7 @@ public class CrimesController {
     
     public void setModel(Model model) {
     	this.model = model;
-    	this.boxCategoria.getItems().addAll(model.listAllCategorie());
-    	this.boxAnno.getItems().addAll(model.listAllAnni());
+    	this.boxAnno.getItems().addAll(model.getAllAnni());
+    	this.boxCategoria.getItems().addAll(model.getAllCategories());
     }
 }

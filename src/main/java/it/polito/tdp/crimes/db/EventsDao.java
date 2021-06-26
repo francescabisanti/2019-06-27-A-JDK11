@@ -56,10 +56,12 @@ public class EventsDao {
 		}
 	}
 	
-	public List<String> listAllCategorie(){
-		String sql = "SELECT DISTINCT e.offense_category_id AS c "
-				+ "FROM EVENTS e  "
-				+ "ORDER BY c ASC " ;
+	
+	
+	public List <String> getAllCategories(){
+		String sql="SELECT DISTINCT e.offense_category_id AS id "
+				+ "FROM EVENTS e "
+				+ "";
 		try {
 			Connection conn = DBConnect.getConnection() ;
 
@@ -70,7 +72,7 @@ public class EventsDao {
 			ResultSet res = st.executeQuery() ;
 			
 			while(res.next()) {
-				list.add(res.getString("c"));
+				list.add(res.getString("id"));
 			}
 			
 			conn.close();
@@ -81,12 +83,14 @@ public class EventsDao {
 			e.printStackTrace();
 			return null ;
 		}
-	}
 	
-	public List<Integer> listAllAnni(){
-		String sql = "SELECT DISTINCT YEAR(e.reported_date) AS c "
+	
+	
+	}
+	public List <Integer> getAllAnni(){
+		String sql="SELECT DISTINCT YEAR(e.reported_date) AS anno "
 				+ "FROM EVENTS e "
-				+ "ORDER BY c ASC" ;
+				+ "ORDER BY YEAR(e.reported_date) ASC ";
 		try {
 			Connection conn = DBConnect.getConnection() ;
 
@@ -97,7 +101,7 @@ public class EventsDao {
 			ResultSet res = st.executeQuery() ;
 			
 			while(res.next()) {
-				list.add(res.getInt("c"));
+				list.add(res.getInt("anno"));
 			}
 			
 			conn.close();
@@ -108,26 +112,28 @@ public class EventsDao {
 			e.printStackTrace();
 			return null ;
 		}
+	
+	
+	
 	}
 	
-	
-	public List<String> listAllVertici(String categoria, Integer anno){
-		String sql = "SELECT DISTINCT e.offense_type_id AS c "
+	public List <String> getAllVertici( String categoria, Integer anno){
+		String sql="SELECT DISTINCT e.offense_type_id AS id "
 				+ "FROM EVENTS e "
-				+ "WHERE YEAR(e.reported_date)=? AND e.offense_category_id=? "
-				+ "" ;
+				+ "WHERE e.offense_category_id=? AND YEAR (e.reported_date)=? "
+				+ "GROUP BY e.offense_type_id";
 		try {
 			Connection conn = DBConnect.getConnection() ;
 
 			PreparedStatement st = conn.prepareStatement(sql) ;
-			st.setInt(1, anno);
-			st.setString(2, categoria);
+			st.setString(1, categoria);
+			st.setInt(2, anno);
 			List<String> list = new ArrayList<>() ;
 			
 			ResultSet res = st.executeQuery() ;
 			
 			while(res.next()) {
-				list.add(res.getString("c"));
+				list.add(res.getString("id"));
 			}
 			
 			conn.close();
@@ -138,34 +144,35 @@ public class EventsDao {
 			e.printStackTrace();
 			return null ;
 		}
+	
+	
+	
 	}
 	
-	public List<Adiacenza> listAllAdiacenze(String categoria, Integer anno){
-		String sql = "SELECT DISTINCT e1.offense_type_id AS t1, e2.offense_type_id AS t2, COUNT(DISTINCT(e1.district_id)) AS peso "
+	public List <Adiacenza> getAllAdiacenze( String categoria, Integer anno){
+		String sql="SELECT e1.offense_type_id AS id1, e2.offense_type_id AS id2, COUNT(DISTINCT e1.district_id) AS peso "
 				+ "FROM EVENTS e1, EVENTS e2 "
-				+ "WHERE YEAR(e1.reported_date)=? AND YEAR(e1.reported_date)=YEAR(e2.reported_date) AND  e1.offense_category_id=? "
-				+ "AND e1.offense_category_id=e2.offense_category_id AND e1.offense_type_id> e2.offense_type_id "
-				+ " AND e1.district_id =e2.district_id "
+				+ "WHERE e1.district_id= e2.district_id AND e1.offense_type_id> e2.offense_type_id AND e1.offense_category_id=? AND e1.offense_category_id= e2.offense_category_id AND YEAR (e1.reported_date)=? AND YEAR(e1.reported_date)=YEAR(e2.reported_date) "
 				+ "GROUP BY e1.offense_type_id, e2.offense_type_id "
-				+ "HAVING peso>0 "
-				+ " ORDER BY peso DESC ";
+				+ "HAVING peso>0";
 		try {
 			Connection conn = DBConnect.getConnection() ;
 
 			PreparedStatement st = conn.prepareStatement(sql) ;
-			st.setInt(1, anno);
-			st.setString(2, categoria);
+			st.setString(1, categoria);
+			st.setInt(2, anno);
 			List<Adiacenza> list = new ArrayList<>() ;
 			
 			ResultSet res = st.executeQuery() ;
 			
 			while(res.next()) {
-				String tipo1= res.getString("t1");
-				String tipo2= res.getString("t2");
-				Double peso= res.getDouble("peso");
-				Adiacenza a = new Adiacenza (tipo1,tipo2,peso);
-				list.add(a);
-				
+				String tipo1= res.getString("id1");
+				String tipo2= res.getString("id2");
+				Double peso=res.getDouble("peso");
+				if(tipo1!=null && tipo2!=null) {
+					Adiacenza a= new Adiacenza (tipo1, tipo2, peso);
+					list.add(a);
+				}
 			}
 			
 			conn.close();
@@ -176,6 +183,9 @@ public class EventsDao {
 			e.printStackTrace();
 			return null ;
 		}
+	
+	
+	
 	}
 	
 }
